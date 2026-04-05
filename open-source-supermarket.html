@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stocking Your Career Basket with Go</title>
+  <meta name="description" content="A minimal session companion for GopherCon Russia 2026: Stocking Your Career Basket with Go." />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: rgba(15, 23, 42, 0.08);
+      --line-strong: rgba(15, 23, 42, 0.14);
+      --accent: #111827;
+      --success: #15803d;
+      --danger: #b91c1c;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --max-width: 920px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+      color: var(--text);
+      line-height: 1.55;
+      padding: 24px 16px 40px;
+    }
+    .shell { width: min(100%, var(--max-width)); margin: 0 auto; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+    .hero, .form-card, .result-card { padding: 24px; }
+    .hero { border-radius: var(--radius-xl); margin-bottom: 16px; }
+    .eyebrow, .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+    h1 {
+      margin: 14px 0 0;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+      line-height: 1.03;
+      letter-spacing: -0.045em;
+      max-width: 740px;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+    p, .small, .hint, .status, li { color: var(--muted); }
+    .hero p { max-width: 680px; margin: 14px 0 0; }
+    .form-card, .result-card { margin-top: 16px; }
+    .section {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    label, legend {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-md);
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      appearance: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: rgba(15, 23, 42, 0.3);
+      box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.06);
+    }
+    .inline-grid, .result-grid, .choice-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .inline-grid, .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .choice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    fieldset { border: 0; padding: 0; margin: 0; }
+    .choice { position: relative; }
+    .choice input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .choice label {
+      margin: 0;
+      display: block;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+      min-height: 100%;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+    .choice label span {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.86rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .choice input:checked + label {
+      border-color: rgba(15, 23, 42, 0.24);
+      background: #f8fafc;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 16px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .primary-btn {
+      background: var(--accent);
+      color: #fff;
+      flex: 1;
+    }
+    .ghost-btn {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    .result-card { display: none; }
+    .result-card.active { display: block; }
+    .result-box {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .result-box h3 {
+      margin: 0 0 10px;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+    ul { margin: 0; padding-left: 18px; }
+    .plan-line {
+      padding: 12px 14px;
+      border-left: 2px solid rgba(15, 23, 42, 0.14);
+      border-radius: 0 12px 12px 0;
+      background: #fff;
+      margin-bottom: 10px;
+      color: var(--muted);
+    }
+    .status {
+      min-height: 22px;
+      margin-top: 14px;
+      font-size: 0.92rem;
+    }
+    .success { color: var(--success); }
+    .error { color: var(--danger); }
+    @media (max-width: 760px) {
+      .inline-grid, .result-grid, .choice-grid { grid-template-columns: 1fr; }
+      .hero, .form-card, .result-card { padding: 18px; }
+    }
+    @media print {
+      body { background: #fff; color: #000; padding: 0; }
+      .hero, .form-card, .actions, .status { display: none !important; }
+      .result-card { display: block !important; border: none; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card hero">
+      <div class="eyebrow">🐹 GopherCon Russia 2026 Session Companion</div>
+      <h1>Stock your career basket with Go-powered open source opportunities.</h1>
+      <p>
+        A minimal post-talk tool for turning inspiration into action. Fill it once, get a practical Go contribution path, and leave the session with your next step already defined.
+      </p>
+    </section>
+
+    <section class="card form-card">
+      <form id="careerForm" novalidate>
+        <div class="section">
+          <h2>Career direction</h2>
+          <div class="field">
+            <label for="targetRole">Target role</label>
+            <select id="targetRole" required>
+              <option value="">Select a role</option>
+              <option value="backend">Backend Developer</option>
+              <option value="fullstack">Full Stack Developer</option>
+              <option value="devops">DevOps / Platform Engineer</option>
+              <option value="data">Data Engineer / Data Scientist</option>
+              <option value="qa">QA / Test Engineer</option>
+              <option value="devrel">Developer Relations / Advocate</option>
+              <option value="technical-writer">Technical Writer</option>
+              <option value="pm">Product / Project Manager</option>
+              <option value="mobile">Mobile Developer</option>
+              <option value="frontend">Frontend Developer</option>
+            </select>
+          </div>
+
+          <div class="inline-grid">
+            <div class="field">
+              <label for="primarySkill">Skill to grow</label>
+              <input id="primarySkill" type="text" placeholder="Concurrency, testing, APIs, observability..." required />
+              <div class="hint">Keep it specific.</div>
+            </div>
+            <div class="field">
+              <label for="technology">Go area</label>
+              <input id="technology" type="text" placeholder="Go, Gin, gRPC, Kubernetes, Prometheus..." required />
+              <div class="hint">This makes the plan more relevant.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Available capacity</h2>
+          <div class="inline-grid">
+            <div class="field">
+              <label for="hoursPerWeek">Hours per week</label>
+              <input id="hoursPerWeek" type="number" min="1" max="40" placeholder="5" required />
+            </div>
+            <div class="field">
+              <label for="workType">Preferred contribution style</label>
+              <select id="workType" required>
+                <option value="">Select contribution style</option>
+                <option value="coding">Writing Go code</option>
+                <option value="writing">Writing docs and examples</option>
+                <option value="teaching">Teaching and mentoring</option>
+                <option value="organizing">Maintaining and coordinating</option>
+                <option value="designing">Improving developer experience</option>
+                <option value="testing">Testing and reliability</option>
+              </select>
+            </div>
+          </div>
+
+          <fieldset class="field">
+            <legend>Current level</legend>
+            <div class="choice-grid">
+              <div class="choice">
+                <input type="radio" id="beginner" name="skillLevel" value="beginner" required />
+                <label for="beginner">Beginner<span>Needs guided, low-risk tasks.</span></label>
+              </div>
+              <div class="choice">
+                <input type="radio" id="intermediate" name="skillLevel" value="intermediate" />
+                <label for="intermediate">Intermediate<span>Can contribute independently.</span></label>
+              </div>
+              <div class="choice">
+                <input type="radio" id="advanced" name="skillLevel" value="advanced" />
+                <label for="advanced">Advanced<span>Ready for ownership and mentoring.</span></label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="actions">
+          <button class="primary-btn" type="submit">Generate strategy</button>
+        </div>
+
+        <div class="status" id="statusMessage" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section class="card result-card" id="resultCard" aria-live="polite">
+      <div style="display:flex;justify-content:space-between;gap:16px;align-items:start;flex-wrap:wrap;margin-bottom:16px;">
+        <div>
+          <div class="badge" id="resultBadge">Generated strategy</div>
+          <h2 id="resultTitle" style="margin-top:12px;">Your Go contribution strategy</h2>
+          <p class="small" id="resultIntro"></p>
+        </div>
+        <div class="actions" style="margin-top:0;">
+          <button class="ghost-btn" type="button" id="printBtn">Print / Save as PDF</button>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-box">
+          <h3>Recommended aisle</h3>
+          <p id="aisleText"></p>
+        </div>
+        <div class="result-box">
+          <h3>Recommended projects to explore</h3>
+          <ul id="projectsList"></ul>
+        </div>
+      </div>
+
+      <div class="result-grid" style="margin-top:14px;">
+        <div class="result-box">
+          <h3>Your first 3 contributions</h3>
+          <ul id="prioritiesList"></ul>
+        </div>
+        <div class="result-box">
+          <h3>Open source opportunities</h3>
+          <ul id="opportunitiesList"></ul>
+        </div>
+      </div>
+
+      <div class="result-grid" style="margin-top:14px;">
+        <div class="result-box">
+          <h3>Your time commitment</h3>
+          <p id="timeText"></p>
+        </div>
+        <div class="result-box">
+          <h3>Action steps this week</h3>
+          <ul id="actionsList"></ul>
+        </div>
+      </div>
+
+      <div class="section" style="margin-top:14px;">
+        <h2>30-day plan</h2>
+        <div id="planList"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const roleStrategies = {
+      frontend: {
+        aisle: "Aisle 2 — developer tooling, dashboard UX, and Go-powered interfaces",
+        priorities: {
+          beginner: [
+            "Start with docs, examples, or small UI fixes around Go-powered tools.",
+            "Improve usability in setup flows for developers using Go tooling.",
+            "Contribute small frontend polish to products maintained by Go teams."
+          ],
+          intermediate: [
+            "Improve developer-facing interfaces connected to Go services.",
+            "Refine onboarding, dashboards, or CLI companion interfaces.",
+            "Bridge frontend and Go backend issues with clear contributor feedback."
+          ],
+          advanced: [
+            "Own UX improvements in a Go-heavy developer tool.",
+            "Lead cross-functional contributions across Go APIs and frontend experience.",
+            "Mentor contributors improving usability in technical products."
+          ]
+        }
+      },
+      backend: {
+        aisle: "Aisle 3 — APIs, concurrency, performance, and reliability in Go",
+        priorities: {
+          beginner: [
+            "Improve examples, tests, or documentation around Go APIs.",
+            "Fix clear backend bugs in Go services with small scope.",
+            "Study and contribute to code that teaches idiomatic Go structure."
+          ],
+          intermediate: [
+            "Implement one scoped Go backend feature with tests.",
+            "Improve observability, validation, or error handling in a Go service.",
+            "Contribute to packages that sharpen your API or systems thinking."
+          ],
+          advanced: [
+            "Tackle performance, concurrency, or architecture issues in mature Go projects.",
+            "Own a reliability improvement in a production-minded Go codebase.",
+            "Review and mentor contributors around idiomatic Go tradeoffs."
+          ]
+        }
+      },
+      fullstack: {
+        aisle: "Aisle 3 — end-to-end products powered by Go backends",
+        priorities: {
+          beginner: [
+            "Improve docs and setup for full-stack products that use Go under the hood.",
+            "Fix one small end-to-end issue touching both UX and backend behavior.",
+            "Learn how Go supports product thinking by tracing one user flow."
+          ],
+          intermediate: [
+            "Ship one user-facing improvement backed by Go logic.",
+            "Improve local developer experience for a Go-based full-stack app.",
+            "Contribute to auth, API, or data flows in a scoped way."
+          ],
+          advanced: [
+            "Own a full product slice in a Go-first application.",
+            "Refactor a noisy workflow for maintainability and scale.",
+            "Create starter templates or examples that make Go adoption easier."
+          ]
+        }
+      },
+      devrel: {
+        aisle: "Aisle 4 — Go advocacy, onboarding, and community education",
+        priorities: {
+          beginner: [
+            "Write a beginner-friendly guide to getting started with Go open source.",
+            "Improve onboarding docs for contributors new to the Go ecosystem.",
+            "Turn audience questions into reusable educational content."
+          ],
+          intermediate: [
+            "Create tutorials tied to real Go contribution paths.",
+            "Run a walkthrough, meetup session, or office hour around Go contribution.",
+            "Build bridges between maintainers and newcomers through clear content."
+          ],
+          advanced: [
+            "Design repeatable advocacy systems around Go projects.",
+            "Coordinate community activation around releases, tools, or learning paths.",
+            "Help make Go feel more accessible to underrepresented contributors."
+          ]
+        }
+      },
+      'technical-writer': {
+        aisle: "Aisle 1 — docs, examples, and clarity in the Go ecosystem",
+        priorities: {
+          beginner: [
+            "Fix confusing setup steps, broken links, and weak examples in Go docs.",
+            "Rewrite one onboarding section so a newcomer can actually follow it.",
+            "Add practical examples that explain Go concepts through use cases."
+          ],
+          intermediate: [
+            "Improve documentation flow for a real Go tool or package.",
+            "Create examples around testing, concurrency, or deployment.",
+            "Make Go project docs easier to search, scan, and trust."
+          ],
+          advanced: [
+            "Own a major docs improvement effort in a Go project.",
+            "Standardize information quality across a Go ecosystem.",
+            "Mentor contributors on writing clear technical guidance."
+          ]
+        }
+      },
+      pm: {
+        aisle: "Aisle 5 — maintenance systems, roadmaps, and contributor flow for Go projects",
+        priorities: {
+          beginner: [
+            "Improve issue clarity and contributor guidance in a Go project.",
+            "Help organize backlog and roadmap communication.",
+            "Document where newcomers should start."
+          ],
+          intermediate: [
+            "Run triage and prepare contributor-ready tasks.",
+            "Improve release and maintainer coordination practices.",
+            "Reduce confusion in the contributor journey."
+          ],
+          advanced: [
+            "Build systems that make Go projects healthier over time.",
+            "Design contributor operations that scale beyond a single maintainer.",
+            "Coach project communities toward sustainable ownership."
+          ]
+        }
+      },
+      devops: {
+        aisle: "Aisle 3 — cloud-native infrastructure, automation, and Go-powered operations",
+        priorities: {
+          beginner: [
+            "Improve setup docs and examples around Go-powered infra tools.",
+            "Fix simple CI, release, or config issues in Go projects.",
+            "Document common operator pain points for maintainers."
+          ],
+          intermediate: [
+            "Optimize automation or release workflows in a Go ecosystem project.",
+            "Improve observability, logging, or deployment confidence.",
+            "Contribute to tooling that sharpens your platform engineering depth."
+          ],
+          advanced: [
+            "Own reliability, automation, or scale improvements in cloud-native Go projects.",
+            "Contribute to infra code with long-term maintainability in mind.",
+            "Mentor contributors through operationally complex codebases."
+          ]
+        }
+      },
+      mobile: {
+        aisle: "Aisle 2 — mobile apps and clients backed by Go services",
+        priorities: {
+          beginner: [
+            "Improve docs and examples for mobile teams consuming Go APIs.",
+            "Help document integration gaps between clients and Go services.",
+            "Contribute small fixes around onboarding or API usage."
+          ],
+          intermediate: [
+            "Improve mobile-facing developer experience in Go-backed systems.",
+            "Contribute to SDK examples, auth flows, or integration utilities.",
+            "Tighten quality around client-server interaction patterns."
+          ],
+          advanced: [
+            "Own performance or integration improvements across mobile and Go services.",
+            "Improve architecture or tooling that supports app teams using Go backends.",
+            "Coach contributors around cross-platform engineering tradeoffs."
+          ]
+        }
+      },
+      data: {
+        aisle: "Aisle 3 — data pipelines, observability, and performance with Go tooling",
+        priorities: {
+          beginner: [
+            "Improve examples and docs for Go-based data tooling.",
+            "Write tests around transformations or processing behavior.",
+            "Document real use cases that help others adopt the tool."
+          ],
+          intermediate: [
+            "Add practical utilities or example workflows in Go data projects.",
+            "Improve performance or usability in data pipelines.",
+            "Contribute examples that teach systems thinking through Go."
+          ],
+          advanced: [
+            "Optimize data-intensive code paths in Go projects.",
+            "Drive maintainable improvements in observability or analytics tooling.",
+            "Support contributor education through example-rich architecture work."
+          ]
+        }
+      },
+      qa: {
+        aisle: "Aisle 2 — testing, correctness, and release confidence in Go projects",
+        priorities: {
+          beginner: [
+            "Write reproducible bug reports and improve test coverage around known issues.",
+            "Document expected behavior so contributors can reason about failures faster.",
+            "Start with small testing improvements in active Go projects."
+          ],
+          intermediate: [
+            "Improve regression coverage for critical Go workflows.",
+            "Automate one high-value reliability path.",
+            "Strengthen bug triage and severity communication for maintainers."
+          ],
+          advanced: [
+            "Design scalable quality practices for contributor-heavy Go projects.",
+            "Create durable testing patterns and conventions.",
+            "Coach contributors on correctness, risk, and release confidence."
+          ]
+        }
+      }
+    };
+
+    const form = document.getElementById('careerForm');
+    const resultCard = document.getElementById('resultCard');
+    const statusMessage = document.getElementById('statusMessage');
+
+    function setStatus(message, type) {
+      statusMessage.textContent = message;
+      statusMessage.className = type ? `status ${type}` : 'status';
+    }
+
+    function getFormData() {
+      const skillLevelInput = document.querySelector('input[name="skillLevel"]:checked');
+      return {
+        targetRole: document.getElementById('targetRole').value,
+        primarySkill: document.getElementById('primarySkill').value.trim(),
+        technology: document.getElementById('technology').value.trim(),
+        hoursPerWeek: document.getElementById('hoursPerWeek').value,
+        workType: document.getElementById('workType').value,
+        skillLevel: skillLevelInput ? skillLevelInput.value : ''
+      };
+    }
+
+    function validateForm(data) {
+      if (!data.targetRole) return 'Please select a target role.';
+      if (!data.primarySkill || data.primarySkill.length < 2) return 'Please enter a specific skill to grow.';
+      if (!data.technology || data.technology.length < 2) return 'Please enter a Go area or tool.';
+      if (!data.hoursPerWeek || Number(data.hoursPerWeek) < 1 || Number(data.hoursPerWeek) > 40) return 'Hours per week must be between 1 and 40.';
+      if (!data.workType) return 'Please select a contribution style.';
+      if (!data.skillLevel) return 'Please choose your current level.';
+      return null;
+    }
+
+    function getTimeGuidance(hours) {
+      const h = Number(hours);
+      if (h <= 4) return 'Keep scope tiny. Aim for one clear first contribution, not many scattered attempts.';
+      if (h <= 8) return 'You have enough time for one meaningful contribution each week if you keep the scope tight.';
+      return 'You have enough room to combine learning, contribution, and community participation consistently.';
+    }
+
+    function getProjects(data) {
+      return [
+        data.technology,
+        'Kubernetes',
+        'Prometheus',
+        'Gin or gRPC-Go',
+        'Open source Go tools'
+      ];
+    }
+
+    function getOpportunities(data) {
+      const opportunities = [
+        'LFX Mentorship and LFX project opportunities',
+        'Outreachy internship rounds',
+        'Google Summer of Code participating organizations',
+        'CNCF and Linux Foundation community programs',
+        'Hacktoberfest and contribution-based community drives'
+      ];
+
+      if (data.skillLevel === 'beginner') {
+        opportunities.unshift('Beginner-friendly documentation and onboarding programs');
+      }
+
+      if (data.workType === 'writing') {
+        opportunities.unshift('Documentation fellowships, docs sprints, and tutorial programs');
+      }
+
+      if (data.workType === 'organizing') {
+        opportunities.unshift('Community support, issue triage, and maintainer support programs');
+      }
+
+      return opportunities.slice(0, 5);
+    }
+
+    function getActions() {
+      return [
+        'Pick one project and star or watch it.',
+        'Read the contribution guide.',
+        'Find one beginner-friendly issue or docs gap.',
+        'Join the project community.',
+        'Make one small contribution this week.'
+      ];
+    }
+
+    function getThirtyDayPlan(data) {
+      return [
+        `Week 1 — Shortlist 3 Go or ${data.technology}-adjacent projects and choose one realistic path in ${data.workType}.`,
+        `Week 2 — Make one small but real contribution tied to ${data.primarySkill}.`,
+        'Week 3 — Follow maintainer feedback and make a second contribution that shows consistency.',
+        'Week 4 — Summarize what you learned, what you shipped, and what basket item comes next.'
+      ];
+    }
+
+    function generateStrategy(data) {
+      const strategy = roleStrategies[data.targetRole];
+      const priorities = strategy.priorities[data.skillLevel] || strategy.priorities.beginner;
+      return {
+        badge: `${data.skillLevel.charAt(0).toUpperCase() + data.skillLevel.slice(1)} ${data.targetRole.replace('-', ' ')}`,
+        title: `A ${data.hoursPerWeek}-hour/week Go contribution strategy`,
+        intro: `Improve ${data.primarySkill} using ${data.technology}.`,
+        aisle: strategy.aisle,
+        projects: getProjects(data),
+        priorities,
+        opportunities: getOpportunities(data),
+        actions: getActions(),
+        time: getTimeGuidance(data.hoursPerWeek),
+        plan: getThirtyDayPlan(data)
+      };
+    }
+
+    function fillList(id, items) {
+      document.getElementById(id).innerHTML = items.map(item => `<li>${item}</li>`).join('');
+    }
+
+    function renderPlan(items) {
+      document.getElementById('planList').innerHTML = items.map(item => `<div class="plan-line">${item}</div>`).join('');
+    }
+
+    function renderStrategy(strategy) {
+      document.getElementById('resultBadge').textContent = strategy.badge;
+      document.getElementById('resultTitle').textContent = strategy.title;
+      document.getElementById('resultIntro').textContent = strategy.intro;
+      document.getElementById('aisleText').textContent = strategy.aisle;
+      document.getElementById('timeText').textContent = strategy.time;
+
+      fillList('projectsList', strategy.projects);
+      fillList('prioritiesList', strategy.priorities);
+      fillList('opportunitiesList', strategy.opportunities);
+      fillList('actionsList', strategy.actions);
+      renderPlan(strategy.plan);
+
+      resultCard.classList.add('active');
+      resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setStatus('Strategy generated.', 'success');
+    }
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const data = getFormData();
+      const error = validateForm(data);
+      if (error) {
+        setStatus(error, 'error');
+        return;
+      }
+      renderStrategy(generateStrategy(data));
+    });
+
+    document.getElementById('printBtn').addEventListener('click', function () {
+      window.print();
+    });
+  </script>
+</body>
+</html>
